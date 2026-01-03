@@ -1,0 +1,79 @@
+// 프로젝트에서 쓰이는 gradle plugin을 정의, SpingBoot version 정의
+// plugin: Gradle build 시스템을 확장하는 기능 모듈.
+// 플러그인을 적용해야 Gradle이 source code compiling, testing, creating JAR, managing DI 가능
+plugins {
+    id 'java'  // Gradle에 자바 프로젝트 빌드 기능 추가 => compileJava, test, JAR같은 기본 task들이 등록됨
+    // 아래 2개의 플러그인들은 스프링 부트 프로젝트라면 거의 항상 쓰임
+    id 'org.springframework.boot' version '3.5.4'  // Spring Boot 전용 빌드 지원 +> bootRun, bootJar같은 task 제공 (SpringBoot 앱 실행/패키징)
+    id 'io.spring.dependency-management' version '1.1.7' // Spring의 의존성 버전 관리 자동화 => spring-boot-starter-*이ㅡ 버전을 일일이 안 적어도 됨(Spring BOM 관리)
+}
+
+group = 'com.packt'  // 이 자바 프로젝트의 기본 팩키지가 될 그룹 ID
+version = '0.0.1-SNAPSHOT'  //
+description = 'cardatabase'  //
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+// 의존성 리포지터리 정의: 라이브러리들(dependencies) 저장하고 배포하는 공간
+/* 대표적으로,
+ * Maven Central Repository : 전 세계 대부분의 Java library가 올라와 있음 (repo.maven.apache.org/maven2)
+ * Spring Repository: 스프링 관련 라이브러리 전용 저장소 (repo.spring.io/release)
+ * JCenter : 과거에 많이 사용
+ * 회사 내부 private repository (ex. Nexus, Artifactory)
+ */
+repositories {
+    mavenCentral()
+}
+
+/* 의존성(Dependencies): 개발자가 직접 개발하지 않고 외부에서 제공되는 코드/라이브러리
+   pom.xml이나 build.gradle에 의존성을 적으면, build tool(Maven/Gradle)이 Repository에서 해당 dependency을 찾아 다운로드
+   그리고 project에도 사용할수 있게끔 classpath에도 추가
+
+   classpath: when executing a program, this is where JVM finds .class(클래스 파일)/.jar(라이브러리)
+
+   Dependency의 이름 해석: 'groupId : artifactId : version'  ==> GAV 좌표
+   EX) 'org.springframework.boot:spring-boot-starter-web:3.3.0'
+   groupId: 라이브러리를 만든 조직/회사/프로젝트
+artifactId: 실제 라이브러리(module)의 이름
+   version: 해당 라이브러리의 버전
+   위에 플러그인에서 'io.spring.dependency-management'를 쓰면 버전을 생략가능(따라서 아래 리스트에서 버전 생략됨)
+ */
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // H2 DB 의존성 추가할 경우,
+    //runtimeOnly 'com.h2database:h2'
+
+    // MariaDB의존성 추가
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+    // 스프링 이니셜라이저에 의해 자동으로 포함됨
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
+
+    // 스프링 시큐리티 관련 dependency
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    // JWT관련
+    // jjwt: 자바 및 안드로이드용 JWT library (https://github.com/jwtk/jjwt)
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5', 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+    // Restful API Documentation
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.0.2'
+
+}
+
+// Test등의 process build의 일부인 task를 정의
+tasks.named('test') {
+    useJUnitPlatform()
+}
